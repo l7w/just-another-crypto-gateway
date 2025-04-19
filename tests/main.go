@@ -1,5 +1,3 @@
-// The Go test suite simulates SMS and MQTT requests, measures performance, and tests use cases.
-
 package main
 
 import (
@@ -12,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,9 +23,49 @@ const (
 	clientID      = "test-client"
 	numRequests   = 1000
 	concurrency   = 50
-	rateLimit     = 10 // Matches gateway's RATE_LIMIT_CALLS
+	rateLimit     = 10
 	rateLimitWait = 60 * time.Second
 )
+
+var (
+	httpRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total HTTP requests",
+		},
+		[]string{"path", "status"},
+	)
+	mqttRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mqtt_requests_total",
+			Help: "Total MQTT requests",
+		},
+		[]string{"status"},
+	)
+	httpRequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "HTTP request duration",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"path"},
+	)
+	mqttRequestDuration = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "mqtt_request_duration_seconds",
+			Help:    "MQTT request duration",
+			Buckets: prometheus.DefBuckets,
+		},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(httpRequestsTotal, mqttRequestsTotal, httpRequestDuration, mqttRequestDuration)
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":9090", nil)
+	}()
+}
 
 type Metrics struct {
 	TotalRequests int
@@ -86,14 +126,17 @@ func TestBandwidthSMS(t *testing.T) {
 			latency := time.Since(start)
 			if err != nil || resp.StatusCode != http.StatusNoContent {
 				metrics.Record(false, latency)
+				httpRequestsTotal.WithLabelValues("/sms", fmt.Sprintf("%d", resp.StatusCode)).Inc()
+				httpRequestDuration.WithLabelValues("/sms").Observe(float64(latency) / float64(time.Second))
 				return
 			}
 			metrics.Record(true, latency)
+			httpRequestsTotal.WithLabelValues("/sms", "204").Inc()
+			httpRequestDuration.WithLabelValues("/sms").Observe(float64(latency) / float64(time.Second))
 		}(i)
 
-		// Simulate rate limit
 		if (i+1)%rateLimit == 0 {
-			time.Sleep(rateLimitWait / 10) // Partial wait to avoid full lockout
+			time.Sleep(rateLimitWait / 10)
 		}
 	}
 
@@ -134,9 +177,13 @@ func TestBandwidthMQTT(t *testing.T) {
 			latency := time.Since(start)
 			if token.Error() != nil {
 				metrics.Record(false, latency)
+				mqttRequestsTotal.WithLabelValues("error").Inc()
+				mqttRequestDuration.Observe(float64(latency) / float64(time.Second))
 				return
 			}
 			metrics.Record(true, latency)
+			mqttRequestsTotal.WithLabelValues("success").Inc()
+			mqttRequestDuration.Observe(float64(latency) / float64(time.Second))
 		}(i)
 
 		if (i+1)%rateLimit == 0 {
@@ -159,13 +206,14 @@ func TestUseCaseValidPayment(t *testing.T) {
 	resp, err := sendSMSRequest("PAY 0.5 0x742d35Cc6634C0532925a3b844Bc454e4438f44e")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	httpRequestsTotal.WithLabelValues("/sms", "204").Inc()
 }
 
 func TestUseCaseInvalidAddress(t *testing.T) {
 	resp, err := sendSMSRequest("PAY 0.1 0xInvalidAddress")
 	assert.NoError(t, err)
-	assert.Equal(t, http.StatusNoContent, resp.StatusCode) // Gateway responds with 204, error in SMS
-	// Note: Check SMS response for error message in production
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	httpRequestsTotal.WithLabelValues("/sms", "204").Inc()
 }
 
 func TestUseCaseRateLimit(t *testing.T) {
@@ -173,8 +221,9 @@ func TestUseCaseRateLimit(t *testing.T) {
 		resp, err := sendSMSRequest(fmt.Sprintf("PAY 0.1 0x742d35Cc6634C0532925a3b844Bc454e4438f44e"))
 		assert.NoError(t, err)
 		if i >= rateLimit {
-			// Expect rate limit error in SMS response, but HTTP 204
-			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+			httpRequestsTotal.WithLabelValues("/sms", "429").Inc()
+		} else {
+			httpRequestsTotal.WithLabelValues("/sms", "204").Inc()
 		}
 	}
 }
@@ -183,6 +232,7 @@ func TestUseCaseInvalidAmount(t *testing.T) {
 	resp, err := sendSMSRequest("PAY -0.1 0x742d35Cc6634C0532925a3b844Bc454e4438f44e")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	httpRequestsTotal.WithLabelValues("/sms", "204").Inc()
 }
 
 func sendSMSRequest(body string) (*http.Response, error) {

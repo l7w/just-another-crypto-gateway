@@ -41,8 +41,15 @@ Tests in a tests/ directory (you'll need to create these; a sample test structur
 ├── docker-compose.yml
 ├── payment_gateway.py
 ├── requirements.txt
+├── prometheus.yml
+├── grafana_dashboard.json
+├── grafana_provisioning/
+│   ├── datasources/
+│   │   └── datasource.yml
+│   ├── dashboards/
+│   │   └── dashboard.yml
 ├── tests/
-│   ├── main.go
+│   ├── main_test.go
 │   ├── go.mod
 │   └── go.sum (generated after running tests)
 └── .env (not committed)
@@ -80,6 +87,11 @@ Optionally, add a Codecov token as CODECOV_TOKEN for test coverage reporting.
 Push the code to the main branch to trigger the workflow.
 The image will be available at ghcr.io/your-username/your-repo/payment-gateway:latest (and other tags based on the metadata action).
 
+Grafana
+
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=admin
+
 tests/test_payment_gateway.py
 
 Notes:
@@ -102,6 +114,7 @@ TestBandwidthMQTT: Sends 1000 MQTT messages concurrently, respecting rate limits
 Metrics include requests per second, average latency, and error rates.
 
 Use Case Tests:
+
 TestUseCaseValidPayment: Tests a valid payment request.
 TestUseCaseInvalidAddress: Tests an invalid Ethereum address.
 TestUseCaseRateLimit: Tests rate limiting by exceeding the limit.
