@@ -1,12 +1,67 @@
 ```
-   `7MMF'    db       .g8"""bgd   .g8"""bgd  
-     MM     ;MM:    .dP'     `M .dP'     `M  
-     MM    ,V^MM.   dM'       ` dM'       `  
-     MM   ,M  `MM   MM          MM           
-     MM   AbmmmqMA  MM.         MM.    `7MMF'
-(O)  MM  A'     VML `Mb.     ,' `Mb.     MM  
- Ymmm9 .AMA.   .AMMA. `"bmmmd'    `"bmmmdPY  
-  just    another      crypto      gateway	
+                                                                  
+    68b                                                           
+    Y89                     /                                     
+    ___ ___   ___   ____   /M                                     
+    `MM `MM    MM  6MMMMb\/MMMMM                                  
+     MM  MM    MM MM'    ` MM                                     
+     MM  MM    MM YM.      MM                                     
+     MM  MM    MM  YMMMMb  MM                                     
+     MM  MM    MM      `Mb MM                                     
+     MM  YM.   MM L    ,MM YM.  ,                                 
+     MM   YMMM9MM_MYMMMM9   YMMM9                                 
+     MM                                                           
+ (8) M9                                                           
+  YMM9                                                            
+                                                                  
+                                                                  
+                                    ___                           
+                                    `MM                           
+                              /      MM                           
+   ___   ___  __     _____   /M      MM  __     ____  ___  __     
+ 6MMMMb  `MM 6MMb   6MMMMMb /MMMMM   MM 6MMb   6MMMMb `MM 6MM     
+8M'  `Mb  MMM9 `Mb 6M'   `Mb MM      MMM9 `Mb 6M'  `Mb MM69 "     
+    ,oMM  MM'   MM MM     MM MM      MM'   MM MM    MM MM'        
+,6MM9'MM  MM    MM MM     MM MM      MM    MM MMMMMMMM MM         
+MM'   MM  MM    MM MM     MM MM      MM    MM MM       MM         
+MM.  ,MM  MM    MM YM.   ,M9 YM.  ,  MM    MM YM    d9 MM         
+`YMMM9'Yb_MM_  _MM_ YMMMMM9   YMMM9 _MM_  _MM_ YMMMM9 _MM_        
+                                                                  
+                                                                  
+                                                                  
+                                                                  
+                                                                  
+                                                                  
+                                                                  
+                                       /                          
+  ____  ___  __ ____    ___ __ ____   /M      _____               
+ 6MMMMb.`MM 6MM `MM(    )M' `M6MMMMb /MMMMM  6MMMMMb              
+6M'   Mb MM69 "  `Mb    d'   MM'  `Mb MM    6M'   `Mb             
+MM    `' MM'      YM.  ,P    MM    MM MM    MM     MM             
+MM       MM        MM  M     MM    MM MM    MM     MM             
+MM       MM        `Mbd'     MM    MM MM    MM     MM             
+YM.   d9 MM         YMP      MM.  ,M9 YM.  ,YM.   ,M9             
+ YMMMM9 _MM_         M       MMYMMM9   YMMM9 YMMMMM9              
+                    d'       MM                                   
+                (8),P        MM                                   
+                 YMM        _MM_                                  
+                                                                  
+                                                                  
+                                                                  
+                                                                  
+                  /                                               
+  __       ___   /M      ____  ____    _    ___   ___  ____    ___
+ 6MMbMMM 6MMMMb /MMMMM  6MMMMb `MM(   ,M.   )M' 6MMMMb `MM(    )M'
+6M'`Mb  8M'  `Mb MM    6M'  `Mb `Mb   dMb   d' 8M'  `Mb `Mb    d' 
+MM  MM      ,oMM MM    MM    MM  YM. ,PYM. ,P      ,oMM  YM.  ,P  
+YM.,M9  ,6MM9'MM MM    MMMMMMMM  `Mb d'`Mb d'  ,6MM9'MM   MM  M   
+ YMM9   MM'   MM MM    MM         YM,P  YM,P   MM'   MM   `Mbd'   
+(M      MM.  ,MM YM.  ,YM    d9   `MM'  `MM'   MM.  ,MM    YMP    
+ YMMMMb.`YMMM9'Yb.YMMM9 YMMMM9     YP    YP    `YMMM9'Yb.   M     
+6M    Yb                                                   d'     
+YM.   d9                                               (8),P      
+ YMMMM9                                                 YMM       
+         a rolling venture - proof of concept ... cdx	
 ```
 > problem: deliver weekly pay to employees with sms, and minimal access to laptop/desktop
 
