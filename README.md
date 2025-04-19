@@ -1,12 +1,30 @@
 # sms-crypto-gateway
 ```
-      _   _                                 
-  ___| |_| |__   ___ _ __ ___ _ __ ___  ___ 
- / _ \ __| '_ \ / _ \ '__/ __| '_ ` _ \/ __|
-|  __/ |_| | | |  __/ |  \__ \ | | | | \__ \
- \___|\__|_| |_|\___|_|  |___/_| |_| |_|___/
+                                   888                          
+                                   888                          
+                                   888                          
+ .d8888b 888d888 888  888 88888b.  888888 .d88b.                
+d88P"    888P"   888  888 888 "88b 888   d88""88b               
+888      888     888  888 888  888 888   888  888               
+Y88b.    888     Y88b 888 888 d88P Y88b. Y88..88P               
+ "Y8888P 888      "Y88888 88888P"   "Y888 "Y88P"                
+                      888 888                                   
+                 Y8b d88P 888                                   
+                  "Y88P"  888                                   
+                  888                                           
+                  888                                           
+                  888                                           
+ .d88b.   8888b.  888888 .d88b.  888  888  888  8888b.  888  888
+d88P"88b     "88b 888   d8P  Y8b 888  888  888     "88b 888  888
+888  888 .d888888 888   88888888 888  888  888 .d888888 888  888
+Y88b 888 888  888 Y88b. Y8b.     Y88b 888 d88P 888  888 Y88b 888
+ "Y88888 "Y888888  "Y888 "Y8888   "Y8888888P"  "Y888888  "Y88888
+     888                                                     888
+Y8b d88P                                                Y8b d88P
+ "Y88P"                                                  "Y88P" 
 
 v1.02 - poc - by chris dickman
+"a project completed for a client without my secret sauce."
 ```
 Payment Gateway Setup Guide
 This guide provides instructions for setting up, developing, testing, and deploying a payment gateway system that supports SMS and MQTT-based Ethereum transactions. The system is designed for both local development (using Docker and KIND) and production deployment (on AWS EKS, Azure AKS, or DigitalOcean DOKS) with Terraform, Docker Compose, GitHub Actions, and Grafana monitoring.
