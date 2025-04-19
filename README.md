@@ -48,6 +48,7 @@ A .env file with environment variables (see Environment Variables).
 Access to Twilio, Infura, and an Ethereum wallet for testing transactions.
 GitHub repository with Actions enabled for CI/CD.
 
+```
 Directory Structure
 ├── .github/
 │   └── workflows/
@@ -74,7 +75,7 @@ Directory Structure
 ├── kind-config.yaml
 ├── setup-kind.sh
 └── .env
-
+```
 
 Dockerfiles: Dockerfile for the payment gateway, Dockerfile.tests for the Go test suite.
 Docker Compose: Runs the payment gateway, Redis, Prometheus, Grafana, and tester locally.
