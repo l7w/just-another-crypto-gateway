@@ -8,10 +8,9 @@
  Ymmm9 .AMA.   .AMMA. `"bmmmd'    `"bmmmdPY  
   just    another      crypto      gateway	
 ```
-> problem: deliver crypto via sms to employees in smart phone compatible territories
-``
-accept and pay ethereum to a country of employees that all couldn't afford laptop/desktop computers. all of the employees did have SMS compatible phones.
-``
+> problem: deliver weekly pay to employees with sms, and minimal access to laptop/desktop
+
+In an increasingly globalized workforce, businesses face significant challenges in delivering timely, secure, and cost-effective payroll solutions to employees in underserved regions where access to traditional computing infrastructure—such as laptops, desktops, or reliable internet—is limited or nonexistent. These employees, often in rural or developing areas, rely on mobile phones as their primary digital interface, necessitating innovative payment systems that leverage ubiquitous SMS technology. "Just Another Crypto Gateway" addresses this critical gap by providing a robust, scalable, and secure cryptocurrency payment platform that enables employers to disburse funds directly to employees’ mobile phones via SMS, bypassing the constraints of traditional banking systems and legacy payroll infrastructure.
 
 > Payment Gateway Setup Guide
 
