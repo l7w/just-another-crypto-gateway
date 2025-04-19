@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  payment-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY}/payment-gateway:${TAG:-latest}
+    container_name: payment-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - TWILIO_SID=${TWILIO_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE=${TWILIO_PHONE}
+      - TWILIO_WEBHOOK_SECRET=${TWILIO_WEBHOOK_SECRET}
+      - MQTT_BROKER=${MQTT_BROKER:-broker.hivemq.com}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_TOPIC=${MQTT_TOPIC:-payment/requests}
+      - INFURA_URL=${INFURA_URL}
+      - WALLET_PRIVATE_KEY=${WALLET_PRIVATE_KEY}
+      - RATE_LIMIT_CALLS=${RATE_LIMIT_CALLS:-10}
+      - RATE_LIMIT_PERIOD=${RATE_LIMIT_PERIOD:-60}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - FLASK_HOST=${FLASK_HOST:-0.0.0.0}
+      - FLASK_PORT=${FLASK_PORT:-5000}
+      - MAX_AMOUNT=${MAX_AMOUNT:-100.0}
+      - ALLOWED_COMMANDS=${ALLOWED_COMMANDS:-PAY,TRANSFER}
+    depends_on:
+      - redis
+    networks:
+      - payment-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - payment-net
+    restart: unless-stopped
+
+networks:
+  payment-net:
+    driver: bridge
+
+volumes:
+  redis-data:
