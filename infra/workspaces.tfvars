@@ -1,0 +1,30 @@
+# dev.tfvars
+environment = "dev"
+github_repository = "user/just-another-crypto-gateway"
+nomad_address = "http://localhost:4646"
+database_url = "postgresql://user:password@localhost:5432/payroll"
+
+# staging.tfvars
+environment = "staging"
+github_repository = "user/just-another-crypto-gateway"
+do_token = "${DO_TOKEN}"
+nomad_address = "http://nomad-staging:4646"
+database_url = "postgresql://user:password@staging-db:5432/payroll"
+
+# prod.tfvars
+environment = "prod"
+github_repository = "user/just-another-crypto-gateway"
+aws_region = "us-east-1"
+aws_access_key = "${AWS_ACCESS_KEY}"
+aws_secret_key = "${AWS_SECRET_KEY}"
+azure_resource_group = "crypto-gateway-rg"
+azure_location = "eastus"
+azure_client_id = "${AZURE_CLIENT_ID}"
+azure_client_secret = "${AZURE_CLIENT_SECRET}"
+azure_tenant_id = "${AZURE_TENANT_ID}"
+azure_subscription_id = "${AZURE_SUBSCRIPTION_ID}"
+gcp_credentials = "${GCP_CREDENTIALS}"
+gcp_project = "crypto-gateway-prod"
+gcp_region = "us-central1"
+nomad_address = "http://nomad-prod:4646"
+database_url = "postgresql://user:password@prod-db:5432/payroll"

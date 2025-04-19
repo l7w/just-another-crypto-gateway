@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'sms-proxy'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'nomad'
+    static_configs:
+      - targets: ['nomad:4646']
+  - job_name: 'consul'
+    consul_sd_configs:
+      - server: 'consul:8500'

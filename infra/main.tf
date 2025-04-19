@@ -1,121 +1,101 @@
-variable "environment" {
-  description = "Deployment environment (dev or prod)"
-  type        = string
-  default     = "dev"
-  validation {
-    condition     = contains(["dev", "prod"], var.environment)
-    error_message = "Environment must be one of: dev, prod"
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0"
+    }
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
+    nomad = {
+      source  = "hashicorp/nomad"
+      version = "~> 2.0"
+    }
   }
 }
 
-variable "provider" {
-  description = "Cloud provider to deploy to (aws, azure, or digitalocean, ignored in dev)"
-  type        = string
-  default     = "aws"
-  validation {
-    condition     = contains(["aws", "azure", "digitalocean"], var.provider)
-    error_message = "Provider must be one of: aws, azure, digitalocean"
-  }
+# Providers (no count)
+provider "docker" {
+  host = terraform.workspace == "dev" ? "unix:///var/run/docker.sock" : null
 }
 
-variable "aws_region" {
-  description = "AWS region for EKS cluster"
-  type        = string
-  default     = "us-east-1"
+provider "digitalocean" {
+  token = terraform.workspace == "staging" ? var.do_token : ""
 }
 
-variable "azure_region" {
-  description = "Azure region for AKS cluster"
-  type        = string
-  default     = "eastus"
+provider "aws" {
+  region     = terraform.workspace == "prod" ? var.aws_region : "us-east-1"
+  access_key = terraform.workspace == "prod" ? var.aws_access_key : ""
+  secret_key = terraform.workspace == "prod" ? var.aws_secret_key : ""
 }
 
-variable "do_region" {
-  description = "DigitalOcean region for DOKS cluster"
-  type        = string
-  default     = "nyc1"
+provider "azurerm" {
+  features {}
+  client_id       = terraform.workspace == "prod" ? var.azure_client_id : ""
+  client_secret   = terraform.workspace == "prod" ? var.azure_client_secret : ""
+  tenant_id       = terraform.workspace == "prod" ? var.azure_tenant_id : ""
+  subscription_id = terraform.workspace == "prod" ? var.azure_subscription_id : ""
 }
 
-variable "do_token" {
-  description = "DigitalOcean API token"
-  type        = string
-  sensitive   = true
-  default     = ""
+provider "google" {
+  credentials = terraform.workspace == "prod" ? var.gcp_credentials : ""
+  project     = terraform.workspace == "prod" ? var.gcp_project : ""
+  region      = terraform.workspace == "prod" ? var.gcp_region : "us-central1"
 }
 
-variable "cluster_name" {
-  description = "Name of the Kubernetes cluster"
-  type        = string
-  default     = "envoy-gateway-cluster"
+provider "kubernetes" {
+  host                   = terraform.workspace == "dev" ? "" : (terraform.workspace == "staging" ? module.kubernetes.cluster_endpoint : module.kubernetes.cluster_endpoint)
+  cluster_ca_certificate = terraform.workspace == "dev" ? "" : base64decode(module.kubernetes.cluster_ca_certificate)
+  token                  = terraform.workspace == "dev" ? "" : module.kubernetes.cluster_token
 }
 
-variable "github_repository" {
-  description = "GitHub repository for the payment gateway image (e.g., username/repo)"
-  type        = string
-  default     = "your-username/your-repo"
+provider "nomad" {
+  address   = var.nomad_address
+  secret_id = var.nomad_token
 }
 
-variable "image_tag" {
-  description = "Docker image tag for the payment gateway"
-  type        = string
-  default     = "latest"
+# Modules
+module "kubernetes" {
+  source = "./modules/kubernetes"
+
+  environment          = terraform.workspace
+  do_token             = var.do_token
+  aws_region           = var.aws_region
+  azure_resource_group = var.azure_resource_group
+  azure_location       = var.azure_location
+  gcp_project          = var.gcp_project
+  gcp_region           = var.gcp_region
+  github_repository    = var.github_repository
+  database_url         = var.database_url
 }
 
-variable "twilio_sid" {
-  description = "Twilio Account SID"
-  type        = string
-  sensitive   = true
-  default     = ""
+module "nomad" {
+  source = "./modules/nomad"
+
+  environment       = terraform.workspace
+  nomad_address     = var.nomad_address
+  github_repository = var.github_repository
 }
 
-variable "twilio_auth_token" {
-  description = "Twilio Auth Token"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
+module "monitoring" {
+  source = "./modules/monitoring"
 
-variable "twilio_phone" {
-  description = "Twilio Phone Number"
-  type        = string
-  default     = ""
-}
-
-variable "twilio_webhook_secret" {
-  description = "Twilio Webhook Secret"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "mqtt_broker" {
-  description = "MQTT Broker Address"
-  type        = string
-  default     = "broker.hivemq.com"
-}
-
-variable "mqtt_port" {
-  description = "MQTT Broker Port"
-  type        = string
-  default     = "1883"
-}
-
-variable "mqtt_topic" {
-  description = "MQTT Topic for Payment Requests"
-  type        = string
-  default     = "payment/requests"
-}
-
-variable "infura_url" {
-  description = "Infura URL for Ethereum"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "wallet_private_key" {
-  description = "Wallet Private Key for Ethereum Transactions"
-  type        = string
-  sensitive   = true
-  default     = ""
+  environment = terraform.workspace
 }

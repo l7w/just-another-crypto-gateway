@@ -43,6 +43,18 @@ services:
       - payment-net
     restart: unless-stopped
 
+  sms-proxy:
+    image: sms-proxy
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      # ... add all 50 modems
+    network_mode: host
+    volumes:
+      - ./config.toml:/etc/sms-proxy/config.toml
+    depends_on:
+      - redis
+      - sip-gateway
+
   tester:
     build:
       context: .

@@ -12,10 +12,8 @@
      MM   YMMM9MM_MYMMMM9   YMMM9                                 
      MM                                                           
  (8) M9                                                           
-  YMM9                                                            
-                                                                  
-                                                                  
-                                    ___                           
+  YMM9                    
+                                   ___                           
                                     `MM                           
                               /      MM                           
    ___   ___  __     _____   /M      MM  __     ____  ___  __     
@@ -25,13 +23,7 @@
 ,6MM9'MM  MM    MM MM     MM MM      MM    MM MMMMMMMM MM         
 MM'   MM  MM    MM MM     MM MM      MM    MM MM       MM         
 MM.  ,MM  MM    MM YM.   ,M9 YM.  ,  MM    MM YM    d9 MM         
-`YMMM9'Yb_MM_  _MM_ YMMMMM9   YMMM9 _MM_  _MM_ YMMMM9 _MM_        
-                                                                  
-                                                                  
-                                                                  
-                                                                  
-                                                                  
-                                                                  
+`YMMM9'Yb_MM_  _MM_ YMMMMM9   YMMM9 _MM_  _MM_ YMMMM9 _MM_                                                                          
                                                                   
                                        /                          
   ____  ___  __ ____    ___ __ ____   /M      _____               
@@ -45,10 +37,7 @@ YM.   d9 MM         YMP      MM.  ,M9 YM.  ,YM.   ,M9
                     d'       MM                                   
                 (8),P        MM                                   
                  YMM        _MM_                                  
-                                                                  
-                                                                  
-                                                                  
-                                                                  
+            
                   /                                               
   __       ___   /M      ____  ____    _    ___   ___  ____    ___
  6MMbMMM 6MMMMb /MMMMM  6MMMMb `MM(   ,M.   )M' 6MMMMb `MM(    )M'
@@ -75,6 +64,7 @@ Our blockchain-fueled, SMS-driven platform, enhanced by EMV-powered debit card i
 
 This guide provides instructions for setting up, developing, testing, and deploying a payment gateway system that supports SMS and MQTT-based Ethereum transactions. The system is designed for both local development (using Docker and KIND) and production deployment (on AWS EKS, Azure AKS, or DigitalOcean DOKS) with Terraform, Docker Compose, GitHub Actions, and Grafana monitoring.
 Overview
+
 The payment gateway system includes:
 
 ```

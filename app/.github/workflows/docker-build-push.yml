@@ -93,3 +93,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Build and push sms-proxy
+  uses: docker/build-push-action@v5
+  with:
+    context: .
+    file: Dockerfile
+    push: true
+    tags: ghcr.io/${{ github.repository }}/sms-proxy:latest

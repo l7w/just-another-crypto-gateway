@@ -1,121 +1,116 @@
 variable "environment" {
-  description = "Deployment environment (dev or prod)"
+  description = "Deployment environment (dev, staging, prod)"
   type        = string
   default     = "dev"
-  validation {
-    condition     = contains(["dev", "prod"], var.environment)
-    error_message = "Environment must be one of: dev, prod"
-  }
 }
 
-variable "provider" {
-  description = "Cloud provider to deploy to (aws, azure, or digitalocean, ignored in dev)"
+variable "github_repository" {
+  description = "GitHub repository name (e.g., user/repo)"
   type        = string
-  default     = "aws"
-  validation {
-    condition     = contains(["aws", "azure", "digitalocean"], var.provider)
-    error_message = "Provider must be one of: aws, azure, digitalocean"
-  }
-}
-
-variable "aws_region" {
-  description = "AWS region for EKS cluster"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "azure_region" {
-  description = "Azure region for AKS cluster"
-  type        = string
-  default     = "eastus"
-}
-
-variable "do_region" {
-  description = "DigitalOcean region for DOKS cluster"
-  type        = string
-  default     = "nyc1"
 }
 
 variable "do_token" {
   description = "DigitalOcean API token"
   type        = string
+  default     = ""
   sensitive   = true
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "aws_access_key" {
+  description = "AWS access key"
+  type        = string
   default     = ""
-}
-
-variable "cluster_name" {
-  description = "Name of the Kubernetes cluster"
-  type        = string
-  default     = "envoy-gateway-cluster"
-}
-
-variable "github_repository" {
-  description = "GitHub repository for the payment gateway image (e.g., username/repo)"
-  type        = string
-  default     = "your-username/your-repo"
-}
-
-variable "image_tag" {
-  description = "Docker image tag for the payment gateway"
-  type        = string
-  default     = "latest"
-}
-
-variable "twilio_sid" {
-  description = "Twilio Account SID"
-  type        = string
   sensitive   = true
-  default     = ""
 }
 
-variable "twilio_auth_token" {
-  description = "Twilio Auth Token"
+variable "aws_secret_key" {
+  description = "AWS secret key"
   type        = string
+  default     = ""
   sensitive   = true
-  default     = ""
 }
 
-variable "twilio_phone" {
-  description = "Twilio Phone Number"
+variable "azure_resource_group" {
+  description = "Azure resource group"
   type        = string
-  default     = ""
+  default     = "crypto-gateway-rg"
 }
 
-variable "twilio_webhook_secret" {
-  description = "Twilio Webhook Secret"
+variable "azure_location" {
+  description = "Azure location"
   type        = string
+  default     = "eastus"
+}
+
+variable "azure_client_id" {
+  description = "Azure client ID"
+  type        = string
+  default     = ""
   sensitive   = true
+}
+
+variable "azure_client_secret" {
+  description = "Azure client secret"
+  type        = string
   default     = ""
-}
-
-variable "mqtt_broker" {
-  description = "MQTT Broker Address"
-  type        = string
-  default     = "broker.hivemq.com"
-}
-
-variable "mqtt_port" {
-  description = "MQTT Broker Port"
-  type        = string
-  default     = "1883"
-}
-
-variable "mqtt_topic" {
-  description = "MQTT Topic for Payment Requests"
-  type        = string
-  default     = "payment/requests"
-}
-
-variable "infura_url" {
-  description = "Infura URL for Ethereum"
-  type        = string
   sensitive   = true
+}
+
+variable "azure_tenant_id" {
+  description = "Azure tenant ID"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "azure_subscription_id" {
+  description = "Azure subscription ID"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "gcp_credentials" {
+  description = "GCP credentials JSON"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "gcp_project" {
+  description = "GCP project ID"
+  type        = string
   default     = ""
 }
 
-variable "wallet_private_key" {
-  description = "Wallet Private Key for Ethereum Transactions"
+variable "gcp_region" {
+  description = "GCP region"
   type        = string
-  sensitive   = true
+  default     = "us-central1"
+}
+
+variable "nomad_address" {
+  description = "Nomad server address"
+  type        = string
+  default     = "http://localhost:4646"
+}
+
+variable "nomad_token" {
+  description = "Nomad API token"
+  type        = string
   default     = ""
+  sensitive   = true
+}
+
+variable "database_url" {
+  description = "PostgreSQL connection string"
+  type        = string
+  default     = "postgresql://user:password@localhost:5432/payroll"
+  sensitive   = true
 }

@@ -1,0 +1,32 @@
+name: Deploy Local
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-local:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v4
+
+      # Set up Docker Compose
+      - name: Set up Docker Compose
+        uses: docker/setup-buildx-action@v3
+
+      # Run Docker Compose
+      - name: Run Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml up -d --build
+
+      # Test local deployment
+      - name: Test local deployment
+        run: |
+          sleep 30 # Wait for services to start
+          curl http://localhost:8080/health || exit 1 # Payment Gateway
+          curl http://localhost:8081/health || exit 1 # SIP Gateway
+          curl http://localhost:8082/health || exit 1 # Hardware Proxy
+          curl http://localhost:3000/health || exit 1 # Middleware
+          curl http://localhost:9090/-/healthy || exit 1 # Prometheus
+          curl http://localhost:3001 || exit 1 # Grafana

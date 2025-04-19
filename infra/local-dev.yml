@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  payment-gateway:
+    image: ghcr.io/${GITHUB_REPOSITORY}/payment-gateway:latest
+    build:
+      context: payment-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://user:password@postgres:5432/payroll
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - app-network
+
+  sip-gateway:
+    image: ghcr.io/${GITHUB_REPOSITORY}/sip-gateway:latest
+    build:
+      context: sip-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  hardware-proxy:
+    image: ghcr.io/${GITHUB_REPOSITORY}/hardware-proxy:latest
+    build:
+      context: hardware-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+      - "9090:9090"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+      # ... add up to /dev/ttyUSB49
+    volumes:
+      - ./hardware-proxy/config.toml:/etc/sms-proxy/config.toml
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  nomad-plugin:
+    image: ghcr.io/${GITHUB_REPOSITORY}/nomad-plugin:latest
+    build:
+      context: nomad-plugin
+      dockerfile: Dockerfile
+    volumes:
+      - /opt/nomad/plugins:/opt/nomad/plugins
+    networks:
+      - app-network
+
+  middleware:
+    image: ghcr.io/${GITHUB_REPOSITORY}/middleware:latest
+    build:
+      context: middleware
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/payroll
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=payroll
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:8.3.3
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana_dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+
+networks:
+  app-network:
+    driver: bridge

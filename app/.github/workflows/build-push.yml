@@ -1,0 +1,67 @@
+name: Build and Push
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v4
+
+      # Log in to GHCR
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      # Build and push Payment Gateway
+      - name: Build and push Payment Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: payment-gateway
+          file: payment-gateway/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/payment-gateway:latest
+
+      # Build and push SIP Gateway
+      - name: Build and push SIP Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: sip-gateway
+          file: sip-gateway/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/sip-gateway:latest
+
+      # Build and push Hardware Proxy
+      - name: Build and push Hardware Proxy
+        uses: docker/build-push-action@v5
+        with:
+          context: hardware-proxy
+          file: hardware-proxy/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/hardware-proxy:latest
+
+      # Build and push Nomad Device Plugin
+      - name: Build and push Nomad Device Plugin
+        uses: docker/build-push-action@v5
+        with:
+          context: nomad-plugin
+          file: nomad-plugin/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/nomad-plugin:latest
+
+      # Build and push Middleware
+      - name: Build and push Middleware
+        uses: docker/build-push-action@v5
+        with:
+          context: middleware
+          file: middleware/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/middleware:latest

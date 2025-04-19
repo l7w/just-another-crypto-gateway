@@ -1,0 +1,116 @@
+name: Lint and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v4
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Set up Rust
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      # Set up Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16'
+
+      # Install Python dependencies
+      - name: Install Payment Gateway dependencies
+        run: |
+          cd payment-gateway
+          pip install -r requirements.txt
+          pip install flake8 pytest
+
+      # Lint Payment Gateway
+      - name: Lint Payment Gateway
+        run: |
+          cd payment-gateway
+          flake8 . --max-line-length=88
+
+      # Test Payment Gateway
+      - name: Test Payment Gateway
+        run: |
+          cd payment-gateway
+          pytest
+
+      # Lint SIP Gateway
+      - name: Lint SIP Gateway
+        run: |
+          cd sip-gateway
+          cargo fmt -- --check
+          cargo clippy -- -D warnings
+
+      # Test SIP Gateway
+      - name: Test SIP Gateway
+        run: |
+          cd sip-gateway
+          cargo test
+
+      # Lint Hardware Proxy
+      - name: Lint Hardware Proxy
+        run: |
+          cd hardware-proxy
+          cargo fmt -- --check
+          cargo clippy -- -D warnings
+
+      # Test Hardware Proxy
+      - name: Test Hardware Proxy
+        run: |
+          cd hardware-proxy
+          cargo test
+
+      # Lint Nomad Device Plugin
+      - name: Lint Nomad Device Plugin
+        run: |
+          cd nomad-plugin
+          go fmt ./...
+          go vet ./...
+
+      # Test Nomad Device Plugin
+      - name: Test Nomad Device Plugin
+        run: |
+          cd nomad-plugin
+          go test ./...
+
+      # Install Middleware dependencies
+      - name: Install Middleware dependencies
+        run: |
+          cd middleware
+          npm install
+
+      # Lint Middleware
+      - name: Lint Middleware
+        run: |
+          cd middleware
+          npm run lint
+
+      # Test Middleware
+      - name: Test Middleware
+        run: |
+          cd middleware
+          npm run test

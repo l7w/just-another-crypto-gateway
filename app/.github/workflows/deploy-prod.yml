@@ -1,0 +1,78 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      workspace:
+        description: 'Terraform workspace (staging, prod)'
+        required: true
+        default: 'staging'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v4
+
+      # Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.7'
+
+      # Initialize Terraform
+      - name: Terraform Init
+        run: |
+          terraform init
+
+      # Select Workspace
+      - name: Select Terraform Workspace
+        run: |
+          terraform workspace select ${{ github.event.inputs.workspace }} || terraform workspace new ${{ github.event.inputs.workspace }}
+
+      # Terraform Plan
+      - name: Terraform Plan
+        run: |
+          terraform plan -var-file=${{ github.event.inputs.workspace }}.tfvars
+        env:
+          DO_TOKEN: ${{ secrets.DO_TOKEN }}
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          NOMAD_TOKEN: ${{ secrets.NOMAD_TOKEN }}
+
+      # Terraform Apply
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve -var-file=${{ github.event.inputs.workspace }}.tfvars
+        env:
+          DO_TOKEN: ${{ secrets.DO_TOKEN }}
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          NOMAD_TOKEN: ${{ secrets.NOMAD_TOKEN }}
+
+      # Verify Deployment
+      - name: Verify Kubernetes Deployment
+        run: |
+          kubectl get pods -n default
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Verify Nomad Job
+        run: |
+          nomad status sms_proxy
+        env:
+          NOMAD_ADDR: ${{ secrets.NOMAD_ADDR }}
+          NOMAD_TOKEN: ${{ secrets.NOMAD_TOKEN }}

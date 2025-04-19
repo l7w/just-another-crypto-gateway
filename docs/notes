@@ -1,0 +1,29 @@
+Data Flow Diagram Explanation
+External Entities:
+
+User (SIP Client): Employees using SMS-capable phones or SIP clients to initiate payments or check balances.
+Cellular Network: Delivers SMS to/from Quectel modems.
+Ethereum Network: Processes cryptocurrency transactions (e.g., payments, transfers).
+Debit Card Network: Handles EMV-compliant debit card transactions at POS terminals.
+
+Processes:
+Payment Gateway: Processes SMS/MQTT payment requests, interacts with Ethereum, and manages rate limiting via Redis.
+SIP Gateway: Converts SMS to SIP MESSAGE requests and vice versa, queuing messages in Redis.
+Hardware Proxy: Manages 50 Quectel modems, sends/receives SMS, and exposes a REST API.
+Nomad Cluster: Schedules modem tasks and balances load using the custom modem plugin.
+Monitoring: Collects metrics (Prometheus) and visualizes dashboards (Grafana).
+
+Data Stores:
+Redis: Stores rate limits and SMS queues.
+Prometheus: Stores time-series metrics (e.g., SMS throughput, modem load).
+Grafana: Stores dashboard configurations for visualization.
+
+Data Flows:
+SMS commands flow from users to modems via the cellular network.
+The Hardware Proxy queues SMS in Redis, which the SIP Gateway processes.
+The Payment Gateway handles payment requests, interacts with Ethereum, and logs metrics.
+Debit card transactions are initiated via the Payment Gateway and processed by the debit card network.
+Metrics flow to Prometheus and are visualized in Grafana.
+
+
+Lets implement a smart contract that is the direct payment channel to the customer vault.  We will introduce this ideology as the next generation of pay checks.  An employee no longer simply gets paid at the end of the week, the time "clocked in" like a punch card becomes an investment in themselves that earns interest via a fixed priced yield token allowing weekly withdrawals and deposits for their "vault" or account.  Let's incorporate the latest OpenZeppelin secure contracts for IERC4626.  Include the web3-react middleware for all popular protocols that interfaces with our inter database accounting per client and customer.
