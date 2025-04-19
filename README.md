@@ -13,6 +13,28 @@ This guide provides instructions for setting up, developing, testing, and deploy
 Overview
 The payment gateway system includes:
 
+``
++---------------------+       +---------------------+       +---------------------+
+|   User (SIP Client) |<----->|    SIP Gateway      |<----->|   Hardware Proxy    |
+|                     | SIP   | (Rust, SMS-to-SIP)  | Redis | (Rust, 50 Modems)   |
++---------------------+       +---------------------+       +---------------------+
+                                    |                        | Quectel Modems (50) |
+                                    |                        | /dev/ttyUSB0-49     |
+                                    v                        +---------------------+
++---------------------+       +---------------------+       +---------------------+
+| Payment Gateway     |<----->|   Nomad Cluster     |       |   Cellular Network  |
+| (Flask, Ethereum)   | HTTP  | (Device Plugin,     |       | (SMS Delivery)      |
+|                     |       |  Job Scheduling)    |       +---------------------+
++---------------------+       +---------------------+
+                                    |
+                                    v
++---------------------+       +---------------------+       +---------------------+
+|   Kubernetes        |<----->|   Monitoring        |       |   CI/CD             |
+| (EKS/AKS/DOKS,      | Consul| (Prometheus, Grafana)|       | (GitHub Actions,    |
+|  Envoy Proxy)       |       |                     |       |  GHCR)              |
++---------------------+       +---------------------+       +---------------------+
+```
+
 Backend: A Flask-based Python application (payment_gateway.py) handling SMS (via Twilio) and MQTT (via a public broker) payment/transfer requests.
 Kubernetes: Deployed locally with KIND for development or on cloud providers (AWS, Azure, DigitalOcean) for production, using Envoy Proxy for load balancing and JWT authentication.
 Monitoring: Prometheus and Grafana for metrics visualization and alerting (e.g., request throughput, latency, error rates).
