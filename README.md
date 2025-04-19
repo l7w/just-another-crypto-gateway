@@ -1,4 +1,3 @@
-# sms-crypto-gateway
 ```
    `7MMF'    db       .g8"""bgd   .g8"""bgd  
      MM     ;MM:    .dP'     `M .dP'     `M  
@@ -10,14 +9,14 @@
 ```
 
 ```
-just another crypto gateway
+# just another crypto gateway
 ```
 
->> project goal
+> project goal
 
 accept and pay ethereum to a country of employees that all couldn't afford laptop/desktop computers. all of the employees did have SMS compatible phones.
 
->> Payment Gateway Setup Guide
+> Payment Gateway Setup Guide
 
 This guide provides instructions for setting up, developing, testing, and deploying a payment gateway system that supports SMS and MQTT-based Ethereum transactions. The system is designed for both local development (using Docker and KIND) and production deployment (on AWS EKS, Azure AKS, or DigitalOcean DOKS) with Terraform, Docker Compose, GitHub Actions, and Grafana monitoring.
 Overview
