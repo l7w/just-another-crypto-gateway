@@ -2,108 +2,140 @@ version: '3.8'
 
 services:
   payment-gateway:
+    image: ghcr.io/${GITHUB_REPOSITORY}/payment-gateway:latest
     build:
-      context: .
+      context: payment-gateway
       dockerfile: Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY}/payment-gateway:${TAG:-latest}
-    container_name: payment-gateway
     ports:
-      - "5000:5000"
+      - "8080:8080"
     environment:
-      - TWILIO_SID=${TWILIO_SID}
-      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
-      - TWILIO_PHONE=${TWILIO_PHONE}
-      - TWILIO_WEBHOOK_SECRET=${TWILIO_WEBHOOK_SECRET}
-      - MQTT_BROKER=${MQTT_BROKER:-broker.hivemq.com}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - MQTT_TOPIC=${MQTT_TOPIC:-payment/requests}
-      - INFURA_URL=${INFURA_URL}
-      - WALLET_PRIVATE_KEY=${WALLET_PRIVATE_KEY}
-      - RATE_LIMIT_CALLS=${RATE_LIMIT_CALLS:-10}
-      - RATE_LIMIT_PERIOD=${RATE_LIMIT_PERIOD:-60}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-      - FLASK_HOST=${FLASK_HOST:-0.0.0.0}
-      - FLASK_PORT=${FLASK_PORT:-5000}
-      - MAX_AMOUNT=${MAX_AMOUNT:-100.0}
-      - ALLOWED_COMMANDS=${ALLOWED_COMMANDS:-PAY,TRANSFER}
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://user:password@postgres:5432/payroll
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - app-network
+
+  sip-gateway:
+    image: ghcr.io/${GITHUB_REPOSITORY}/sip-gateway:latest
+    build:
+      context: sip-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
     networks:
-      - payment-net
-    restart: unless-stopped
+      - app-network
 
-  redis:
-    image: redis:7-alpine
-    container_name: redis
+  hardware-proxy:
+    image: ghcr.io/${GITHUB_REPOSITORY}/hardware-proxy:latest
+    build:
+      context: hardware-proxy
+      dockerfile: Dockerfile
     ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - payment-net
-    restart: unless-stopped
-
-  sms-proxy:
-    image: sms-proxy
+      - "8082:8082"
+      - "9090:9090"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=dev
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
-      # ... add all 50 modems
-    network_mode: host
+      # Simulate 1 modem in dev; staging/prod use 50
     volumes:
-      - ./config.toml:/etc/sms-proxy/config.toml
+      - ./hardware-proxy/config.toml:/etc/sms-proxy/config.toml
     depends_on:
       - redis
-      - sip-gateway
+      - nomad
+    networks:
+      - app-network
 
-  tester:
+  nomad:
+    image: hashicorp/nomad:1.8
+    command: agent -dev -config=/nomad/config
+    ports:
+      - "4646:4646"
+    volumes:
+      - ./nomad/config:/nomad/config
+      - /opt/nomad/plugins:/opt/nomad/plugins
+    environment:
+      - NOMAD_ADDR=http://nomad:4646
+    networks:
+      - app-network
+
+  nomad-plugin:
+    image: ghcr.io/${GITHUB_REPOSITORY}/nomad-plugin:latest
     build:
-      context: .
-      dockerfile: Dockerfile.tests
-    container_name: tester
-    ports:
-      - "9090:9090"
-    depends_on:
-      - payment-gateway
-      - redis
-    networks:
-      - payment-net
-    command: ["go", "test", "-v", "./..."]
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
+      context: nomad-plugin
+      dockerfile: Dockerfile
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    ports:
-      - "9091:9090"
+      - /opt/nomad/plugins:/opt/nomad/plugins
+    environment:
+      - MODEM_COUNT=1
+      - ENVIRONMENT=dev
+    depends_on:
+      - nomad
     networks:
-      - payment-net
-    restart: unless-stopped
+      - app-network
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
+  middleware:
+    image: ghcr.io/${GITHUB_REPOSITORY}/middleware:latest
+    build:
+      context: middleware
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./grafana_dashboard.json:/etc/grafana/provisioning/dashboards/payment_gateway.json
-      - ./grafana_provisioning:/etc/grafana/provisioning
+      - DATABASE_URL=postgresql://user:password@postgres:5432/payroll
     depends_on:
-      - prometheus
+      - postgres
     networks:
-      - payment-net
-    restart: unless-stopped
+      - app-network
 
-networks:
-  payment-net:
-    driver: bridge
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=payroll
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:8.3.3
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana_dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
+    networks:
+      - app-network
 
 volumes:
-  redis-data:
-  prometheus-data:
-  grafana-data:
+  postgres-data:
+
+networks:
+  app-network:
+    driver: bridge

@@ -36,7 +36,7 @@ jobs:
       # Terraform Plan
       - name: Terraform Plan
         run: |
-          terraform plan -var-file=${{ github.event.inputs.workspace }}.tfvars
+          terraform plan -var-file=${{ github.event.inputs.workspace }}.tfvars -var="modem_count=${{ github.event.inputs.workspace == 'staging' ? 50 : 50 }}"
         env:
           DO_TOKEN: ${{ secrets.DO_TOKEN }}
           AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
@@ -51,7 +51,7 @@ jobs:
       # Terraform Apply
       - name: Terraform Apply
         run: |
-          terraform apply -auto-approve -var-file=${{ github.event.inputs.workspace }}.tfvars
+          terraform apply -auto-approve -var-file=${{ github.event.inputs.workspace }}.tfvars -var="modem_count=${{ github.event.inputs.workspace == 'staging' ? 50 : 50 }}"
         env:
           DO_TOKEN: ${{ secrets.DO_TOKEN }}
           AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
@@ -70,9 +70,10 @@ jobs:
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
 
-      - name: Verify Nomad Job
+      - name: Verify Nomad Jobs
         run: |
           nomad status sms_proxy
+          nomad status device_plugin
         env:
           NOMAD_ADDR: ${{ secrets.NOMAD_ADDR }}
           NOMAD_TOKEN: ${{ secrets.NOMAD_TOKEN }}
