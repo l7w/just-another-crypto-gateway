@@ -23,25 +23,27 @@ Infrastructure: Terraform for managing Kubernetes clusters and networking.
 Prerequisites
 Local Development
 
+```
 Docker: Install Docker Desktop or Docker Engine.
 KIND: Kubernetes IN Docker (v0.20.0) for local Kubernetes clusters.curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
 chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
+```
 
-
+```
 kubectl: Kubernetes CLI for cluster management.
 helm: For deploying Envoy Gateway and monitoring stack.
 Terraform: Version >= 1.0 for infrastructure management.
 Go: For running the test suite (go.mod specifies version 1.21).
 Python: Version 3.8+ for the payment gateway backend.
-
-Production
-
+```
+Deployment Variables
+```
 AWS Credentials: Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY or use AWS CLI.
 Azure Credentials: Authenticate with az login or set ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_SUBSCRIPTION_ID, ARM_TENANT_ID.
 DigitalOcean Token: Set DIGITALOCEAN_TOKEN or provide via Terraform variable.
 GitHub Container Registry (GHCR): Ensure access to push/pull images from your repository.
-
+```
 General
 
 A .env file with environment variables (see Environment Variables).
@@ -77,6 +79,7 @@ Directory Structure
 └── .env
 ```
 
+```
 Dockerfiles: Dockerfile for the payment gateway, Dockerfile.tests for the Go test suite.
 Docker Compose: Runs the payment gateway, Redis, Prometheus, Grafana, and tester locally.
 Tests: Go-based suite for bandwidth and use case testing.
@@ -84,50 +87,62 @@ Terraform: Configures local KIND or cloud Kubernetes clusters (AWS, Azure, Digit
 Monitoring: Prometheus and Grafana configurations for metrics and alerts.
 CI/CD: GitHub Actions workflow for building and pushing images.
 KIND: Local Kubernetes cluster setup for development.
+```
 
 Environment Variables
 Create a .env file in the project root with the following variables (do not commit to version control):
+```
 # Twilio
 TWILIO_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE=+1234567890
 TWILIO_WEBHOOK_SECRET=your_webhook_secret
-
+```
+```
 # MQTT
 MQTT_BROKER=broker.hivemq.com
 MQTT_PORT=1883
 MQTT_TOPIC=payment/requests
-
+```
+```
 # Ethereum
 INFURA_URL=https://mainnet.infura.io/v3/your_infura_key
 WALLET_PRIVATE_KEY=your_wallet_private_key
-
+```
+```
 # Rate Limiting
 RATE_LIMIT_CALLS=10
 RATE_LIMIT_PERIOD=60
-
+```
+```
 # Redis
 REDIS_URL=redis://redis:6379
-
+```
+```
 # Flask
 FLASK_HOST=0.0.0.0
 FLASK_PORT=5000
-
+```
+```
 # Application
 MAX_AMOUNT=100.0
 ALLOWED_COMMANDS=PAY,TRANSFER
-
+```
+```
 # Grafana
 GRAFANA_ADMIN_USER=admin
 GRAFANA_ADMIN_PASSWORD=admin
-
+```
+```
 # GitHub Repository (for production image)
 GITHUB_REPOSITORY=your-username/your-repo
-
+```
+```
 For production, store sensitive variables (e.g., TWILIO_*, INFURA_URL, WALLET_PRIVATE_KEY) in a secure vault or Terraform Cloud.
 Development Setup (Local Docker)
 The development environment uses Docker and KIND to run a local Kubernetes cluster with the payment gateway, Envoy Proxy, Redis, and monitoring stack.
 Steps
+```
 
 Prepare the Environment:
 
