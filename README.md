@@ -13,7 +13,7 @@ This guide provides instructions for setting up, developing, testing, and deploy
 Overview
 The payment gateway system includes:
 
-``
+```
 +---------------------+       +---------------------+       +---------------------+
 |   User (SIP Client) |<----->|    SIP Gateway      |<----->|   Hardware Proxy    |
 |                     | SIP   | (Rust, SMS-to-SIP)  | Redis | (Rust, 50 Modems)   |
