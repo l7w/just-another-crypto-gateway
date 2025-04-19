@@ -1,0 +1,107 @@
+@startuml Payment Gateway Stack Architecture
+
+' Define skin parameters for better visuals
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam componentStyle uml2
+
+' Define environments
+package "Local Development" #..# {
+  [Docker Compose] --> [KIND Cluster]
+  [Docker Compose] --> [Redis]
+  [Docker Compose] --> [Prometheus]
+  [Docker Compose] --> [Grafana]
+  [Docker Compose] --> [Tester (Go)]
+  [Docker Compose] --> [SIP Gateway (Rust)]
+  [Docker Compose] --> [Hardware Proxy (Rust)]
+  [KIND Cluster] --> [Payment Gateway (Flask)]
+  [KIND Cluster] --> [Envoy Proxy]
+}
+
+package "Production Environment" #..# {
+  package "Nomad Cluster" {
+    [Nomad Client Node 1] --> [Modem Plugin (Go)]
+    [Nomad Client Node 1] --> [Hardware Proxy (Rust)]
+    [Nomad Client Node 1] --> [Quectel Modems (10)]
+    [Nomad Client Node 2] --> [Modem Plugin (Go)]
+    [Nomad Client Node 2] --> [Hardware Proxy (Rust)]
+    [Nomad Client Node 2] --> [Quectel Modems (10)]
+    [Nomad Client Node N] --> [Modem Plugin (Go)]
+    [Nomad Client Node N] --> [Hardware Proxy (Rust)]
+    [Nomad Client Node N] --> [Quectel Modems (10)]
+    [Nomad Server] --> [Consul]
+  }
+
+  package "Kubernetes Cluster (EKS/AKS/DOKS)" {
+    [Payment Gateway (Flask)] --> [Envoy Proxy]
+    [SIP Gateway (Rust)] --> [Envoy Proxy]
+    [Redis] --> [Payment Gateway (Flask)]
+    [Redis] --> [SIP Gateway (Rust)]
+    [Prometheus] --> [Grafana]
+    [Prometheus] --> [Payment Gateway (Flask)]
+    [Prometheus] --> [SIP Gateway (Rust)]
+    [Prometheus] --> [Hardware Proxy (Rust)]
+  }
+}
+
+' External systems
+[User (SIP Client)] --> [SIP Gateway (Rust)] : SIP MESSAGE
+[SIP Gateway (Rust)] --> [Hardware Proxy (Rust)] : Redis Queue
+[Hardware Proxy (Rust)] --> [Quectel Modems (50)] : AT Commands
+[Quectel Modems (50)] --> [Cellular Network] : SMS
+[Cellular Network] --> [Quectel Modems (50)] : SMS
+[Payment Gateway (Flask)] --> [Ethereum Network] : Transactions
+[Payment Gateway (Flask)] --> [Twilio] : SMS Webhook
+[Payment Gateway (Flask)] --> [MQTT Broker] : Payment Requests
+
+' CI/CD
+package "CI/CD Pipeline" {
+  [GitHub Actions] --> [GHCR]
+  [GHCR] --> [Kubernetes Cluster (EKS/AKS/DOKS)]
+  [GHCR] --> [Nomad Cluster]
+}
+
+' Monitoring and service discovery
+[Consul] --> [Nomad Cluster]
+[Consul] --> [Kubernetes Cluster (EKS/AKS/DOKS)]
+[Prometheus] --> [Consul]
+
+' Annotations for data flow
+note right of [SIP Gateway (Rust)]
+  Converts SMS to SIP MESSAGE
+  Queues SMS in Redis
+end note
+
+note right of [Hardware Proxy (Rust)]
+  Manages 50 modems
+  REST API for SMS
+  Queues SMS in Redis
+end note
+
+note right of [Payment Gateway (Flask)]
+  Processes SMS/MQTT payments
+  Ethereum transactions
+  Rate limiting via Redis
+end note
+
+note right of [Modem Plugin (Go)]
+  Fingerprints modems
+  Schedules SMS tasks
+end note
+
+note right of [Prometheus]
+  Scrapes metrics:
+  - SMS throughput
+  - Modem load
+  - Payment latency
+end note
+
+note right of [Grafana]
+  Dashboards:
+  - Payment Gateway
+  - SMS Proxy
+  - Modem Load
+end note
+
+@enduml
