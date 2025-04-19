@@ -6,15 +6,12 @@
      MM   AbmmmqMA  MM.         MM.    `7MMF'
 (O)  MM  A'     VML `Mb.     ,' `Mb.     MM  
  Ymmm9 .AMA.   .AMMA. `"bmmmd'    `"bmmmdPY  
+  just    another      crypto      gateway	
 ```
-
-```
-# just another crypto gateway
-```
-
-> project goal
-
+> problem: deliver crypto via sms to employees in smart phone compatible territories
+``
 accept and pay ethereum to a country of employees that all couldn't afford laptop/desktop computers. all of the employees did have SMS compatible phones.
+``
 
 > Payment Gateway Setup Guide
 
