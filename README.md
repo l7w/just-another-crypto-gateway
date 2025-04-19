@@ -37,11 +37,14 @@ Tests in a tests/ directory (you'll need to create these; a sample test structur
 │   └── workflows/
 │       └── docker-build-push.yml
 ├── Dockerfile
+├── Dockerfile.tests
 ├── docker-compose.yml
 ├── payment_gateway.py
 ├── requirements.txt
 ├── tests/
-│   └── test_payment_gateway.py (create your tests here)
+│   ├── main.go
+│   ├── go.mod
+│   └── go.sum (generated after running tests)
 └── .env (not committed)
 ```
 
@@ -78,4 +81,30 @@ Push the code to the main branch to trigger the workflow.
 The image will be available at ghcr.io/your-username/your-repo/payment-gateway:latest (and other tags based on the metadata action).
 
 tests/test_payment_gateway.py
+
+Notes:
+Replace the JWT issuer and JWKS URL in the SecurityPolicy with your actual authentication provider.
+For production, use a managed certificate (e.g., AWS ACM) instead of self-signed.
+Adjust the instance_types and replicas based on your workload.
+The load balancer is configured with a round
+Round-robin policy for simplicity; Envoy supports other algorithms like least-request or consistent hashing.
+Envoy Gateway provides observability features like metrics and tracing, which can be integrated with tools like Prometheus and Jaeger.
+
+test/main.go
+tests/go.mod
+tests/Dockerfile
+
+Test Details:
+
+Bandwidth Tests:
+TestBandwidthSMS: Sends 1000 SMS requests concurrently (50 at a time) to measure throughput and latency.
+TestBandwidthMQTT: Sends 1000 MQTT messages concurrently, respecting rate limits.
+Metrics include requests per second, average latency, and error rates.
+
+Use Case Tests:
+TestUseCaseValidPayment: Tests a valid payment request.
+TestUseCaseInvalidAddress: Tests an invalid Ethereum address.
+TestUseCaseRateLimit: Tests rate limiting by exceeding the limit.
+TestUseCaseInvalidAmount: Tests a negative amount.
+The tests respect the gateway's rate limit (10 requests per 60 seconds) by adding delays.
 

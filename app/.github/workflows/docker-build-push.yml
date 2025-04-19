@@ -36,7 +36,11 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/ --cov=payment_gateway --cov-report=xml
-
+      
+      - name: Run Go tests
+        run: |
+          docker-compose up --build tester
+	
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
