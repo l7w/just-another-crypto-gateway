@@ -132,6 +132,8 @@ Steps
 Prepare the Environment:
 
 Ensure Docker, KIND, kubectl, helm, Terraform, Go, and Python are installed.
+
+```
 Create a terraform.tfvars file:environment       = "dev"
 cluster_name      = "envoy-gateway-cluster"
 github_repository = "your-username/your-repo"
@@ -141,23 +143,29 @@ twilio_phone      = "+1234567890"
 twilio_webhook_secret = "your_webhook_secret"
 infura_url        = "https://mainnet.infura.io/v3/your_infura_key"
 wallet_private_key = "your_wallet_private_key"
-
+```
 
 
 
 Set Up KIND Cluster:
 
 Run the setup script to build the payment gateway image and create the KIND cluster:chmod +x setup-kind.sh
+```
 ./setup-kind.sh
-
+```
 
 This builds the payment-gateway:latest image and loads it into KIND.
 
 
 Deploy with Terraform:
 
-Initialize Terraform:terraform init
-
+Initialize Terraform Workspaces:
+```
+terraform workspace new dev
+terraform workspace new prod
+terraform workspace select dev
+terraform apply
+```
 
 Apply the configuration:terraform apply
 
@@ -167,13 +175,9 @@ KIND cluster with Envoy Gateway.
 Payment gateway and Redis deployments.
 TLS certificates and JWT authentication.
 
-
-
-
 Run Docker Compose:
 
 Start the local monitoring and testing stack:docker-compose up --build
-
 
 This runs:
 Payment gateway (accessible at http://localhost:5000 for testing outside Kubernetes).
@@ -247,9 +251,6 @@ twilio_phone      = "+1234567890"
 twilio_webhook_secret = "your_webhook_secret"
 infura_url        = "https://mainnet.infura.io/v3/your_infura_key"
 wallet_private_key = "your_wallet_private_key"
-
-
-
 
 Deploy with Terraform:
 
