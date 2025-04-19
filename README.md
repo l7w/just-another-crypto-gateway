@@ -193,50 +193,44 @@ TLS certificates and JWT authentication.
 Run Docker Compose:
 
 Start the local monitoring and testing stack:docker-compose up --build
-
+```
 This runs:
 Payment gateway (accessible at http://localhost:5000 for testing outside Kubernetes).
 Redis for rate limiting.
 Prometheus (http://localhost:9091) for metrics.
 Grafana (http://localhost:3000, login: admin/admin) for dashboards.
 Tester service for running Go tests.
-
-
-
-
+```
 Verify Deployment:
-
+```
 Check Kubernetes resources:kubectl get pods -n default
 kubectl get gateway -n default
-
-
+```
+```
 Access the payment gateway via Envoy (port 8443):curl --cacert ca.crt https://localhost:8443/sms -H "Authorization: Bearer <jwt_token>" -d '{"From":"+1234567890","Body":"PAY 0.1 0x742d35Cc6634C0532925a3b844Bc454e4438f44e"}' -H "Content-Type: application/json"
-
+```
+```
 Replace <jwt_token> with a valid JWT for your issuer (configured in security_policy).
 View metrics in Grafana (http://localhost:3000, dashboard: Payment Gateway Monitoring).
-
-
+```
 Run Tests:
-
+```
 Execute the Go test suite locally:docker-compose run tester
-
-
+```
 This tests bandwidth (SMS/MQTT throughput, latency) and use cases (valid/invalid requests, rate limits).
 Check test output for results (e.g., throughput in req/s, average latency in ms).
-
 
 Development Workflow:
 
 Modify payment_gateway.py or tests/main_test.go as needed.
 Rebuild the Docker image and reload into KIND:./setup-kind.sh
 
-
-Reapply Terraform to update deployments:terraform apply
-
+Reapply Terraform to update deployments:
+```
+terraform apply
+```
 
 Monitor changes in Grafana and test with curl or the test suite.
-
-
 
 Production Setup (Cloud Providers)
 The production environment deploys the payment gateway to a Kubernetes cluster on AWS (EKS), Azure (AKS), or DigitalOcean (DOKS) using Terraform, pulling the image from GHCR.
@@ -245,11 +239,12 @@ Steps
 Prepare the Environment:
 
 Configure cloud credentials:
+```
 AWS: Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY or use AWS CLI.
 Azure: Run az login or set ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_SUBSCRIPTION_ID, ARM_TENANT_ID.
 DigitalOcean: Set DIGITALOCEAN_TOKEN or provide via do_token.
-
-
+```
+```
 Ensure the payment gateway image is pushed to GHCR via GitHub Actions (see CI/CD Setup).
 Create a terraform.tfvars file:environment       = "prod"
 provider          = "aws" # or "azure" or "digitalocean"
@@ -266,9 +261,14 @@ twilio_phone      = "+1234567890"
 twilio_webhook_secret = "your_webhook_secret"
 infura_url        = "https://mainnet.infura.io/v3/your_infura_key"
 wallet_private_key = "your_wallet_private_key"
-
+```
 Deploy with Terraform:
 
-Initialize Terraform:terraform init
-
-Apply the configuration:terraform
+Initialize Terraform:
+```
+terraform init
+```
+Apply the configuration:
+```
+terraform apply
+```
