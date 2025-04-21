@@ -1,0 +1,6 @@
+[modems]
+% for i in range(50)
+modem_${i} = "/dev/ttyUSB${i}"
+% endfor
+[redis]
+url = "redis://redis:6379"

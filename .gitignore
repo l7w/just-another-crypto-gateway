@@ -1,0 +1,5 @@
+.env
+dev/
+.terraform*/*
+*/.terraform*/*
+*/.terraform*.*.*

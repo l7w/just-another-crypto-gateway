@@ -46,9 +46,6 @@ resource "nomad_job" "sms_proxy" {
     replicas         = local.replicas
     resources        = local.resources[var.environment]
   })
-  hcl2 {
-    enabled = true
-  }
 }
 
 resource "nomad_job" "device_plugin" {
@@ -59,7 +56,4 @@ resource "nomad_job" "device_plugin" {
     replicas         = local.replicas
     resources        = local.resources[var.environment]
   })
-  hcl2 {
-    enabled = true
-  }
 }

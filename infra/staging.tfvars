@@ -1,0 +1,5 @@
+environment = "staging"
+github_repository = "user/just-another-crypto-gateway"
+do_token = "${DO_TOKEN}"
+nomad_address = "http://nomad-staging:4646"
+database_url = "postgresql://user:password@staging-db:5432/payroll"

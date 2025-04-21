@@ -1,11 +1,9 @@
 resource "kubernetes_deployment" "prometheus" {
-  count = var.environment != "dev" ? 1 : 0
   metadata {
     name = "prometheus"
     namespace = "default"
   }
   spec {
-    replicas = var.environment == "prod" ? 2 : 1
     selector {
       match_labels = {
         app = "prometheus"
@@ -41,13 +39,11 @@ resource "kubernetes_deployment" "prometheus" {
 }
 
 resource "kubernetes_deployment" "grafana" {
-  count = var.environment != "dev" ? 1 : 0
   metadata {
     name = "grafana"
     namespace = "default"
   }
   spec {
-    replicas = var.environment == "prod" ? 2 : 1
     selector {
       match_labels = {
         app = "grafana"
@@ -83,7 +79,6 @@ resource "kubernetes_deployment" "grafana" {
 }
 
 resource "kubernetes_config_map" "prometheus" {
-  count = var.environment != "dev" ? 1 : 0
   metadata {
     name = "prometheus-config"
     namespace = "default"
@@ -94,7 +89,6 @@ resource "kubernetes_config_map" "prometheus" {
 }
 
 resource "kubernetes_config_map" "grafana" {
-  count = var.environment != "dev" ? 1 : 0
   metadata {
     name = "grafana-dashboard"
     namespace = "default"
@@ -105,7 +99,6 @@ resource "kubernetes_config_map" "grafana" {
 }
 
 resource "kubernetes_service" "prometheus" {
-  count = var.environment != "dev" ? 1 : 0
   metadata {
     name = "prometheus"
     namespace = "default"
@@ -123,7 +116,6 @@ resource "kubernetes_service" "prometheus" {
 }
 
 resource "kubernetes_service" "grafana" {
-  count = var.environment != "dev" ? 1 : 0
   metadata {
     name = "grafana"
     namespace = "default"

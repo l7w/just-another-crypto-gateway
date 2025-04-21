@@ -20,15 +20,105 @@ variable "modem_count" {
   default     = 1
 }
 
+variable "do_token" {
+  description = "DigitalOcean API token"
+  type        = string
+  default     = ""
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = ""
+}
+
+variable "gcp_project" {
+  description = "GCP project ID"
+  type        = string
+  default     = ""
+}
+
+variable "gcp_region" {
+  description = "GCP region"
+  type        = string
+  default     = ""
+}
+
+variable "gcp_credentials" {
+  description = "GCP credentials JSON"
+  type        = string
+  default     = ""
+}
+
+# DigitalOcean Kubernetes Cluster (staging)
+resource "digitalocean_kubernetes_cluster" "doks" {
+  count = var.environment == "staging" ? 1 : 0
+  name   = "crypto-gateway-staging"
+  region = "nyc1"
+  version = "1.28.2-do.0"
+  node_pool {
+    name       = "worker-pool"
+    size       = "s-2vcpu-4gb"
+    node_count = 3
+  }
+}
+
+# AWS EKS Cluster (prod)
+resource "aws_eks_cluster" "eks" {
+  count = var.environment == "prod" ? 1 : 0
+  name     = "crypto-gateway-prod"
+  role_arn = aws_iam_role.eks_role[0].arn
+  vpc_config {
+    subnet_ids = aws_subnet.eks_subnet[*].id
+  }
+}
+
+resource "aws_iam_role" "eks_role" {
+  count = var.environment == "prod" ? 1 : 0
+  name = "crypto-gateway-eks-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_subnet" "eks_subnet" {
+  count = var.environment == "prod" ? 2 : 0
+  vpc_id = aws_vpc.eks_vpc[0].id
+  cidr_block = "10.0.${count.index}.0/24"
+  availability_zone = "${var.aws_region}${count.index == 0 ? "a" : "b"}"
+}
+
+resource "aws_vpc" "eks_vpc" {
+  count = var.environment == "prod" ? 1 : 0
+  cidr_block = "10.0.0.0/16"
+}
+
+# GCP GKE Cluster (prod)
+resource "google_container_cluster" "gke" {
+  count = var.environment == "prod" ? 1 : 0
+  name     = "crypto-gateway-prod"
+  location = var.gcp_region
+  initial_node_count = 3
+  node_config {
+    machine_type = "e2-medium"
+  }
+}
+
 # Redis Deployment
 resource "kubernetes_deployment" "redis" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "redis"
     namespace = "default"
   }
   spec {
-    replicas = 1
+    replicas = var.environment == "prod" ? 3 : 1
     selector {
       match_labels = {
         app = "redis"
@@ -55,7 +145,6 @@ resource "kubernetes_deployment" "redis" {
 
 # Redis Service
 resource "kubernetes_service" "redis" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "redis"
     namespace = "default"
@@ -74,13 +163,12 @@ resource "kubernetes_service" "redis" {
 
 # PostgreSQL Deployment
 resource "kubernetes_deployment" "postgres" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "postgres"
     namespace = "default"
   }
   spec {
-    replicas = 1
+    replicas = var.environment == "prod" ? 3 : 1
     selector {
       match_labels = {
         app = "postgres"
@@ -119,7 +207,6 @@ resource "kubernetes_deployment" "postgres" {
 
 # PostgreSQL Service
 resource "kubernetes_service" "postgres" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "postgres"
     namespace = "default"
@@ -138,13 +225,12 @@ resource "kubernetes_service" "postgres" {
 
 # Payment Gateway Deployment
 resource "kubernetes_deployment" "payment_gateway" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "payment-gateway"
     namespace = "default"
   }
   spec {
-    replicas = 1
+    replicas = var.environment == "prod" ? 3 : 1
     selector {
       match_labels = {
         app = "payment-gateway"
@@ -179,7 +265,6 @@ resource "kubernetes_deployment" "payment_gateway" {
 
 # Payment Gateway Service
 resource "kubernetes_service" "payment_gateway" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "payment-gateway"
     namespace = "default"
@@ -192,19 +277,18 @@ resource "kubernetes_service" "payment_gateway" {
       port        = 8080
       target_port = 8080
     }
-    type = "ClusterIP"
+    type = var.environment == "dev" ? "NodePort" : "ClusterIP"
   }
 }
 
 # SIP Gateway Deployment
 resource "kubernetes_deployment" "sip_gateway" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "sip-gateway"
     namespace = "default"
   }
   spec {
-    replicas = 1
+    replicas = var.environment == "prod" ? 3 : 1
     selector {
       match_labels = {
         app = "sip-gateway"
@@ -235,7 +319,6 @@ resource "kubernetes_deployment" "sip_gateway" {
 
 # SIP Gateway Service
 resource "kubernetes_service" "sip_gateway" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "sip-gateway"
     namespace = "default"
@@ -248,19 +331,18 @@ resource "kubernetes_service" "sip_gateway" {
       port        = 8081
       target_port = 8081
     }
-    type = "ClusterIP"
+    type = var.environment == "dev" ? "NodePort" : "ClusterIP"
   }
 }
 
 # Middleware Deployment
 resource "kubernetes_deployment" "middleware" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "middleware"
     namespace = "default"
   }
   spec {
-    replicas = 1
+    replicas = var.environment == "prod" ? 3 : 1
     selector {
       match_labels = {
         app = "middleware"
@@ -291,7 +373,6 @@ resource "kubernetes_deployment" "middleware" {
 
 # Middleware Service
 resource "kubernetes_service" "middleware" {
-  count = var.environment == "dev" ? 1 : 0
   metadata {
     name      = "middleware"
     namespace = "default"
@@ -304,19 +385,27 @@ resource "kubernetes_service" "middleware" {
       port        = 3000
       target_port = 3000
     }
-    type = "ClusterIP"
+    type = var.environment == "dev" ? "NodePort" : "ClusterIP"
   }
 }
 
-# Outputs (used in monitoring module)
+# Outputs
 output "cluster_endpoint" {
-  value = var.environment == "dev" ? "https://127.0.0.1:8443" : "" # Minikube default
+  value = var.environment == "staging" ? digitalocean_kubernetes_cluster.doks[0].endpoint : (
+            var.environment == "prod" ? aws_eks_cluster.eks[0].endpoint : "")
 }
 
 output "cluster_ca_certificate" {
-  value = var.environment == "dev" ? "" : ""
+  value = var.environment == "staging" ? digitalocean_kubernetes_cluster.doks[0].cluster_ca_certificate : (
+            var.environment == "prod" ? aws_eks_cluster.eks[0].certificate_authority[0].data : "")
 }
 
 output "cluster_token" {
-  value = var.environment == "dev" ? "" : ""
+  value = var.environment == "staging" ? digitalocean_kubernetes_cluster.doks[0].kube_config[0].token : (
+            var.environment == "prod" ? data.aws_eks_cluster_auth.eks[0].token : "")
+}
+
+data "aws_eks_cluster_auth" "eks" {
+  count = var.environment == "prod" ? 1 : 0
+  name  = aws_eks_cluster.eks[0].name
 }

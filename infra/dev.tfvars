@@ -1,0 +1,5 @@
+environment = "dev"
+github_repository = "l7w/sms-crypto-gateway"
+nomad_address = "http://localhost:4646"
+modem_count = "1"
+database_url = "postgresql://user:password@localhost:5432/payroll" 

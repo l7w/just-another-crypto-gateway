@@ -9,8 +9,52 @@ variable "github_repository" {
   type        = string
 }
 
+variable "nomad_address" {
+  description = "Nomad server address"
+  type        = string
+  default     = "http://localhost:4646"
+}
+
+variable "nomad_token" {
+  description = "Nomad API token"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "database_url" {
+  description = "PostgreSQL connection string"
+  type        = string
+  default     = "postgresql://user:password@postgres:5432/payroll"
+  sensitive   = true
+}
+
+variable "modem_count" {
+  description = "Number of modems to manage"
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.modem_count >= 1 && var.modem_count <= 50
+    error_message = "Modem count must be between 1 and 50."
+  }
+}
+
 variable "do_token" {
   description = "DigitalOcean API token"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "do_spaces_access_id" {
+  description = "DigitalOcean Spaces access ID"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "do_spaces_secret_key" {
+  description = "DigitalOcean Spaces secret key"
   type        = string
   default     = ""
   sensitive   = true
@@ -36,53 +80,6 @@ variable "aws_secret_key" {
   sensitive   = true
 }
 
-variable "azure_resource_group" {
-  description = "Azure resource group"
-  type        = string
-  default     = "crypto-gateway-rg"
-}
-
-variable "azure_location" {
-  description = "Azure location"
-  type        = string
-  default     = "eastus"
-}
-
-variable "azure_client_id" {
-  description = "Azure client ID"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "azure_client_secret" {
-  description = "Azure client secret"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "azure_tenant_id" {
-  description = "Azure tenant ID"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "azure_subscription_id" {
-  description = "Azure subscription ID"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "gcp_credentials" {
-  description = "GCP credentials JSON"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
 variable "gcp_project" {
   description = "GCP project ID"
   type        = string
@@ -95,22 +92,9 @@ variable "gcp_region" {
   default     = "us-central1"
 }
 
-variable "nomad_address" {
-  description = "Nomad server address"
-  type        = string
-  default     = "http://localhost:4646"
-}
-
-variable "nomad_token" {
-  description = "Nomad API token"
+variable "gcp_credentials" {
+  description = "GCP service account credentials JSON"
   type        = string
   default     = ""
-  sensitive   = true
-}
-
-variable "database_url" {
-  description = "PostgreSQL connection string"
-  type        = string
-  default     = "postgresql://user:password@localhost:5432/payroll"
   sensitive   = true
 }

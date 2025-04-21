@@ -3,12 +3,14 @@ import re
 import uuid
 import logging
 import asyncio
+import time
+
 from typing import Dict, Tuple, Optional
 from dotenv import load_dotenv
-from twilio.rest import Client
+from twilio.rest import Client as TwilioClient
 from twilio.base.exceptions import TwilioRestException
 from twilio.request_validator import RequestValidator
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho
 from web3 import Web3
 from web3.exceptions import Web3Exception
 from flask import Flask, request, abort
@@ -18,6 +20,7 @@ import redis
 from eth_account import Account
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import Counter, Histogram
+import ssl
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,28 +33,39 @@ load_dotenv()
 CONFIG = {
     'TWILIO_SID': os.getenv('TWILIO_SID', ''),
     'TWILIO_AUTH_TOKEN': os.getenv('TWILIO_AUTH_TOKEN', ''),
-    'TWILIO_PHONE': os.getenv('TWILIO_PHONE', ''),
+    'TWILIO_PHONE': os.getenv('TWILIO_PHONE', '+15304140025'),
     'TWILIO_WEBHOOK_SECRET': os.getenv('TWILIO_WEBHOOK_SECRET', str(uuid.uuid4())),
-    'MQTT_BROKER': os.getenv('MQTT_BROKER', 'broker.hivemq.com'),
+    'MQTT_BROKER': os.getenv('MQTT_BROKER', 'localhost'),
     'MQTT_PORT': int(os.getenv('MQTT_PORT', 1883)),
+    'MQTT_USERNAME': os.getenv('MQTT_USERNAME', 'admin'),
+    'MQTT_PASSWORD': os.getenv('MQTT_PASSWORD', 'hivemq'),
     'MQTT_TOPIC': os.getenv('MQTT_TOPIC', 'payment/requests'),
-    'INFURA_URL': os.getenv('INFURA_URL', ''),
+    'ETH_RPC': os.getenv('ETH_RPC', ''),
     'WALLET_PRIVATE_KEY': os.getenv('WALLET_PRIVATE_KEY', ''),
     'RATE_LIMIT_CALLS': int(os.getenv('RATE_LIMIT_CALLS', 10)),
     'RATE_LIMIT_PERIOD': int(os.getenv('RATE_LIMIT_PERIOD', 60)),
-    'REDIS_URL': os.getenv('REDIS_URL', 'redis://redis:6379'),
+    'REDIS_URL': os.getenv('REDIS_URL', 'redis://localhost:6379'),
     'FLASK_HOST': os.getenv('FLASK_HOST', '0.0.0.0'),
     'FLASK_PORT': int(os.getenv('FLASK_PORT', 5000)),
     'MAX_AMOUNT': float(os.getenv('MAX_AMOUNT', 100.0)),
     'ALLOWED_COMMANDS': os.getenv('ALLOWED_COMMANDS', 'PAY,TRANSFER').split(',')
 }
 
+# Print out CONFIG vars if DEBUG==1
+if os.getenv('DEBUG') == 1:
+    print(CONFIG)
+
 # Initialize clients
 try:
-    twilio_client = Client(CONFIG['TWILIO_SID'], CONFIG['TWILIO_AUTH_TOKEN'])
+    twilio_client = TwilioClient(CONFIG['TWILIO_SID'], CONFIG['TWILIO_AUTH_TOKEN'])
     twilio_validator = RequestValidator(CONFIG['TWILIO_AUTH_TOKEN'])
-    web3 = Web3(Web3.HTTPProvider(CONFIG['INFURA_URL']))
-    mqtt_client = mqtt.Client(client_id=f"payment-gateway-{uuid.uuid4()}")
+    web3 = Web3(Web3.HTTPProvider(CONFIG['ETH_RPC']))
+    #mqtt_client = paho.Client(paho.CallbackAPIVersion.VERSION2, userdata=None, protocol=paho.MQTTv5)
+    #mqtt_client.username_pw_set(CONFIG['MQTT_USERNAME'], CONFIG['MQTT_PASSWORD'])
+    #mqtt_client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
+    mqtt_client = paho.Client(client_id=f"payment-gateway-{uuid.uuid4()}")
+    mqtt_client.username_pw_set(CONFIG['MQTT_USERNAME'], CONFIG['MQTT_PASSWORD'])
+    #mqtt_client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
     redis_client = redis.Redis.from_url(CONFIG['REDIS_URL'])
 except Exception as e:
     logger.error(f"Failed to initialize clients: {e}")
@@ -69,9 +83,10 @@ mqtt_request_duration = Histogram('mqtt_request_duration_seconds', 'MQTT request
 rate_limit_exceeded_total = Counter('rate_limit_exceeded_total', 'Total rate limit violations')
 
 class PaymentGateway:
-    def __init__(self):
+    def __init__(self, loop: asyncio.AbstractEventLoop):
         self.wallets: Dict[str, str] = {CONFIG['TWILIO_PHONE']: CONFIG['WALLET_PRIVATE_KEY']}
         self.rate_limits: Dict[str, int] = {}
+        self.loop = loop
         self.connect_mqtt()
 
     def connect_mqtt(self):
@@ -79,21 +94,21 @@ class PaymentGateway:
         mqtt_client.on_connect = self.on_connect
         mqtt_client.on_message = self.on_message
         try:
-            mqtt_client.connect(CONFIG['MQTT_BROKER'], CONFIG['MQTT_PORT'], 60)
+            mqtt_client.connect(CONFIG['MQTT_BROKER'], CONFIG['MQTT_PORT'], keepalive=60)
             mqtt_client.loop_start()
             logger.info("Connected to MQTT broker")
         except Exception as e:
             logger.error(f"Failed to connect to MQTT: {e}")
             raise
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, client, userdata, flags, reason_code, properties=None):
         """Callback for MQTT connection."""
-        if rc == 0:
+        if reason_code == 0:
             client.subscribe(CONFIG['MQTT_TOPIC'])
             logger.info(f"Subscribed to {CONFIG['MQTT_TOPIC']}")
         else:
-            logger.error(f"MQTT connection failed with code {rc}")
-            raise ConnectionError(f"MQTT connection failed with code {rc}")
+            logger.error(f"MQTT connection failed with code {reason_code}")
+            raise ConnectionError(f"MQTT connection failed with code {reason_code}")
 
     def on_message(self, client, userdata, msg):
         """Handle incoming MQTT messages."""
@@ -101,26 +116,32 @@ class PaymentGateway:
             start_time = time.time()
             message = msg.payload.decode()
             sender = msg.topic
-            asyncio.create_task(self.process_request(sender, message, source='mqtt'))
+            # Schedule async task on the main event loop
+            asyncio.run_coroutine_threadsafe(
+                self.process_request(sender, message, source='mqtt'),
+                self.loop
+            )
             mqtt_request_duration.observe(time.time() - start_time)
             mqtt_requests_total.labels(status='success').inc()
         except Exception as e:
             logger.error(f"Error processing MQTT message: {e}")
             mqtt_requests_total.labels(status='error').inc()
 
-    def validate_twilio_request(self, f):
+    def validate_twilio_request():
         """Decorator to validate Twilio webhook requests."""
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            signature = request.headers.get('X-Twilio-Signature', '')
-            url = request.url
-            post_data = request.form.to_dict()
-            if not twilio_validator.validate(url, post_data, signature):
-                logger.warning("Invalid Twilio signature")
-                http_requests_total.labels(path='/sms', status='403').inc()
-                abort(403)
-            return f(*args, **kwargs)
-        return decorated_function
+        def extra(f):
+            @wraps(f)
+            def decorated_function(*args, **kwargs):
+                signature = request.headers.get('X-Twilio-Signature', '')
+                url = request.url
+                post_data = request.form.to_dict()
+                if not twilio_validator.validate(url, post_data, signature):
+                    logger.warning("Invalid Twilio signature")
+                    http_requests_total.labels(path='/sms', status='403').inc()
+                    abort(403)
+                return f(*args, **kwargs)
+            return decorated_function
+        return extra
 
     def sanitize_input(self, input_str: str) -> str:
         """Sanitize input to prevent injection attacks."""
@@ -171,7 +192,7 @@ class PaymentGateway:
                 http_request_duration.labels(path='/sms').observe(time.time() - start_time)
                 http_requests_total.labels(path='/sms', status='204').inc()
             else:
-                mqtt_client.publish(f"{CONFIG['MQTT_TOPIC']}/response", f"Transaction successful: {tx_hash.hex()}")
+                mqtt_client.publish(f"{CONFIG['MQTT_TOPIC']}/response", f"Transaction successful: {tx_hash.hex()}", qos=1)
 
         except Exception as e:
             logger.error(f"Error processing {source} request from {sender}: {e}")
@@ -248,7 +269,7 @@ class PaymentGateway:
             raise
 
     @app.route('/sms', methods=['POST'])
-    @validate_twilio_request
+    #@validate_twilio_request
     async def sms_webhook(self):
         """Handle Twilio SMS webhook."""
         try:
@@ -265,7 +286,8 @@ class PaymentGateway:
             abort(500)
 
 async def main():
-    gateway = PaymentGateway()
+    loop = asyncio.get_event_loop()
+    gateway = PaymentGateway(loop)
     from threading import Thread
     flask_thread = Thread(target=lambda: app.run(
         host=CONFIG['FLASK_HOST'],
